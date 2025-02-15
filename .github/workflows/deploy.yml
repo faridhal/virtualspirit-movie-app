@@ -1,0 +1,88 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  sanity_code:
+    name: 🌑 Sanity Before Deploy
+    strategy:
+      matrix:
+        node: [20]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🌵 Setup node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 👀 Static Test
+        run: npm run checker
+
+      - name: 👀 Test Build
+        run: npm run build
+
+  build:
+    name: 🐳 Build and push
+    needs: ['sanity_code']
+    if: contains(fromJSON('["refs/heads/master"]'), github.ref)
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🌵 Setup node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: 📥 Install dependencies
+        uses: bahmutov/npm-install@v1
+
+      - name: 👀 Build project
+        run: npm run build
+        env:
+          VITE_BASE_PATH: ${{ secrets.VITE_BASE_PATH }}
+          VITE_MOVIE_BASE_URL: ${{ secrets.VITE_MOVIE_BASE_URL }}
+          VITE_MOVIE_SECRET_KEY: ${{ secrets.VITE_MOVIE_SECRET_KEY }}
+
+      - name: 👀 Push production-ready build files
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-files
+          path: ./dist
+
+  deploy:
+    name: 🌞 Deploy Production
+    needs: ['build']
+    if: contains(fromJSON('["refs/heads/master"]'), github.ref)
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: 📥 Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: production-files
+          path: ./dist
+
+      - name: 👀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist

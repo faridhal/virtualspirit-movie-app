@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest",
+    "lint": "eslint .",
     "check:eslint": "eslint --ignore-pattern .gitignore */**/*.{js,jsx,ts,tsx}",
     "check:prettier": "prettier --ignore-path .gitignore . --check",
     "format:prettier": "prettier --ignore-path .gitignore . --write",
-    "checker": "npm run lint && npm run check:eslint && npm run check:prettier"
+    "checker": "npm run lint && npm run check:eslint && npm run check:prettier && npm run test"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.66.0",

@@ -7,8 +7,10 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig(({ mode }) => {
   const env = { ...process.env, ...loadEnv(mode, process.cwd()) };
   return {
+    base: env.VITE_BASE_PATH,
     plugins: [react(), tailwindcss(), tsconfigPaths()],
     define: {
+      'process.env.BASE_PATH': JSON.stringify(env.VITE_BASE_PATH),
       'process.env.MOVIE_BASE_URL': JSON.stringify(env.VITE_MOVIE_BASE_URL),
       'process.env.MOVIE_SECRET_KEY': JSON.stringify(env.VITE_MOVIE_SECRET_KEY)
     }
